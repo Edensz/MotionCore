@@ -1,0 +1,7 @@
+name: Epiphany
+version: $version
+main: org.epiphany.Epiphany
+description: $description
+authors:
+  - Iceflaked
+api-version: "1.20"

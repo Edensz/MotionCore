@@ -1,0 +1,9 @@
+motd:
+  topper: "             #D29862★ #D26284&l&k||&r #AE70C0&lEpiphany Project #D26284&l&k||&r #D29862★"
+  footer: "           #928396Welcome to the Kingdom of Palea"
+
+global:
+  maxAuthority: Iceflaked
+  day: 0
+  hour: 0
+  started: false
