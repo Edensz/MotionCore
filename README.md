@@ -1,3 +1,3 @@
-# Epiphany Project BETA
+# Cinematic Tool WIP
 
-## Created by IceFlaked [2/13/2024]
+## Created by IceFlaked [3/21/2024]

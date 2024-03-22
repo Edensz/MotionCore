@@ -1,8 +1,8 @@
-package org.epiphany.api;
+package me.cinematic.server;
 
+import me.cinematic.Cinematic;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.epiphany.Epiphany;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,18 +20,26 @@ public class FileApi {
   }
 
   public static void createFolder(String fileName) {
-    var file = new File(Epiphany.getInstance().getDataFolder(), fileName);
+    var file = new File(Cinematic.getInstance().getDataFolder(), fileName);
+
+    if (!file.exists()) file.mkdirs();
+  }
+  public static void createFolder(String fileName, File folder) {
+    var file = new File(folder, fileName);
 
     if (!file.exists()) file.mkdirs();
   }
 
 
-  public static Configuration getConfigYML() {return Epiphany.getInstance().getConfig();}
+  public static Configuration getConfigYML() {return Cinematic.getInstance().getConfig();}
 
-  public static File getDataFolder() {return Epiphany.getInstance().getDataFolder();}
+  public static File getDataFolder() {return Cinematic.getInstance().getDataFolder();}
 
   public static File getFolder(String folderName) {
-    return new File(Epiphany.getInstance().getDataFolder(), folderName);
+    return new File(Cinematic.getInstance().getDataFolder(), folderName);
+  }
+  public static File getFolder(String folderName, File root) {
+    return new File(root, folderName);
   }
 
   public static File getFile(File dataFolder, String fileName) {

@@ -1,4 +1,4 @@
-package org.epiphany.api;
+package me.cinematic.server;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

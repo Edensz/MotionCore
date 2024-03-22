@@ -7,9 +7,9 @@ plugins {
   id("maven-publish")
 }
 
-group = "me.epiphany"
-version = "Project"
-description = "Epiphany Project 1.20"
+group = "me.cinematic"
+version = "1.0"
+description = "Cinematic Tool - 1.20"
 
 repositories {
   mavenLocal()
@@ -83,12 +83,12 @@ tasks {
   }
 
   reobfJar {
-    outputJar.set(layout.buildDirectory.file("libs/Epiphany.jar"))
+    outputJar.set(layout.buildDirectory.file("libs/CinematicTool.jar"))
   }
 
   shadowJar {
-    relocate("co.aikar.commands", "org.epiphany.acf")
-    relocate("co.aikar.locales", "org.epiphany.locales")
+    relocate("co.aikar.commands", "me.cinematic.acf")
+    relocate("co.aikar.locales", "me.cinematic.locales")
   }
 
 }

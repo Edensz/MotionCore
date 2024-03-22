@@ -1,6 +1,6 @@
-name: Epiphany
+name: CinematicTool
 version: $version
-main: org.epiphany.Epiphany
+main: me.cinematic.Cinematic
 description: $description
 authors:
   - Iceflaked
