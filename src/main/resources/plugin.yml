@@ -1,6 +1,6 @@
-name: CinematicTool
+name: MotionCore
 version: $version
-main: me.cinematic.Cinematic
+main: org.motion.MotionCore
 description: $description
 authors:
   - Iceflaked

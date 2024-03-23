@@ -1,8 +1,8 @@
-package me.cinematic.tool;
+package org.motion.tool;
 
-import me.cinematic.Cinematic;
-import me.cinematic.server.ChatUtils;
-import me.cinematic.server.FileApi;
+import org.motion.MotionCore;
+import org.motion.utils.ChatUtils;
+import org.motion.utils.PluginFileAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -30,28 +30,28 @@ public class CinematicHelper {
 
 
   protected static YamlConfiguration getProperties(String name) {
-    var folder = FileApi.getFolder("cinematics");
-    var cinematic = FileApi.getFolder(name, folder);
-    var properties = FileApi.getFile(cinematic, "properties");
+    var folder = PluginFileAPI.getFolder("cinematics");
+    var cinematic = PluginFileAPI.getFolder(name, folder);
+    var properties = PluginFileAPI.getFile(cinematic, "properties");
 
-    return FileApi.getFileConfig(properties);
+    return PluginFileAPI.getFileConfig(properties);
   }
 
 
   protected static void record(Player player, File cinematicFolder, int frameRate) {
 
-    durationTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(Cinematic.getInstance(), () -> {
+    durationTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(MotionCore.getInstance(), () -> {
       player.sendActionBar(ChatUtils.format("&c• &7Duración de la Cinemática&8: &f" + duration + "s &c•"));
       player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK,1,1.25f);
       duration = duration + 1;
     }, 0, 20);
 
-    cinematicTask = Cinematic.getInstance().getService().scheduleWithFixedDelay(() -> {
-      FileApi.createYAMLFile(cinematicFolder, "Frame" + frame);
+    cinematicTask = MotionCore.getInstance().getService().scheduleWithFixedDelay(() -> {
+      PluginFileAPI.createYAMLFile(cinematicFolder, "Frame" + frame);
 
       var playerLocation = player.getLocation();
-      var frameFile = FileApi.getFile(cinematicFolder, "Frame" + frame);
-      var frameConfig = FileApi.getFileConfig(frameFile);
+      var frameFile = PluginFileAPI.getFile(cinematicFolder, "Frame" + frame);
+      var frameConfig = PluginFileAPI.getFileConfig(frameFile);
 
       frameConfig.set("x", playerLocation.getX());
       frameConfig.set("y", playerLocation.getY());

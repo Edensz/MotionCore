@@ -1,9 +1,9 @@
-package me.cinematic.tool;
+package org.motion.tool;
 
-import me.cinematic.Cinematic;
-import me.cinematic.player.PlayerHandler;
-import me.cinematic.server.ChatUtils;
-import me.cinematic.server.FileApi;
+import org.motion.MotionCore;
+import org.motion.utils.PlayerHandler;
+import org.motion.utils.ChatUtils;
+import org.motion.utils.PluginFileAPI;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -16,34 +16,33 @@ import java.util.concurrent.TimeUnit;
 
 
 public class CinematicManager {
-  private final File cinematicsFolder = FileApi.getFolder("cinematics");
+  private final File cinematicsFolder = PluginFileAPI.getFolder("cinematics");
   private static ScheduledFuture<?> task;
-  private int frame = 1;
 
 
-  public void play(String name, Player audience) {
+  protected void play(String name, Player audience) {
     final var previousLocation = audience.getLocation();
     final var previousGamemode = audience.getGameMode();
+    final int[] frame = {1};
 
-    var properties = CinematicHelper.getProperties(name);
-    final var totalFrames = properties.getInt("totalFrames");
-    final var frameRate = properties.getInt("frameRate");
+    final var properties = CinematicHelper.getProperties(name);
 
     audience.setGameMode(GameMode.SPECTATOR);
 
+    task = MotionCore.getInstance().getService().scheduleWithFixedDelay(() -> {
+      if (frame[0] >= properties.getInt("totalFrames")) {
+        Bukkit.getScheduler().runTask(MotionCore.getInstance(), () -> {
+          audience.setGameMode(previousGamemode);
+          audience.teleport(previousLocation);
+        });
 
-    task = Cinematic.getInstance().getService().scheduleWithFixedDelay(() -> {
-      if (frame >= totalFrames) {
-        audience.setGameMode(previousGamemode);
-        audience.teleport(previousLocation);
-
-        frame = 1;
+        frame[0] = 1;
         task.cancel(true);
         task = null;
       }
 
-      var frameFile = FileApi.getFile(FileApi.getFolder(name, cinematicsFolder), "Frame" + frame);
-      var frameConfig = FileApi.getFileConfig(frameFile);
+      var frameFile = PluginFileAPI.getFile(PluginFileAPI.getFolder(name, cinematicsFolder), "Frame" + frame[0]);
+      var frameConfig = PluginFileAPI.getFileConfig(frameFile);
 
       final var world = frameConfig.getString("world");
       final var x = frameConfig.getDouble("x");
@@ -54,17 +53,17 @@ public class CinematicManager {
 
       if (world == null) return;
 
-      Bukkit.getScheduler().runTask(Cinematic.getInstance(), () -> audience.teleport(new Location(Bukkit.getWorld(world), x, y, z, (float) yaw, (float) pitch)));
+      Bukkit.getScheduler().runTask(MotionCore.getInstance(), () -> audience.teleport(new Location(Bukkit.getWorld(world), x, y, z, (float) yaw, (float) pitch)));
 
-      frame = frame + 1;
-    }, 0, 1000/frameRate, TimeUnit.MILLISECONDS);
+      frame[0]++;
+    }, 0, 1000/properties.getInt("frameRate"), TimeUnit.MILLISECONDS);
   }
 
 
   public void finish(Player player) {
-    var cinematic = FileApi.getFolder(CinematicHelper.cinematicName, cinematicsFolder);
-    var file = FileApi.getFile(cinematic, "properties");
-    var properties = FileApi.getFileConfig(file);
+    var cinematic = PluginFileAPI.getFolder(CinematicHelper.cinematicName, cinematicsFolder);
+    var file = PluginFileAPI.getFile(cinematic, "properties");
+    var properties = PluginFileAPI.getFileConfig(file);
 
     properties.set("totalFrames", CinematicHelper.frame);
     properties.set("duration", CinematicHelper.duration);
@@ -73,16 +72,10 @@ public class CinematicManager {
     player.setGameMode(CinematicHelper.previousGamemode);
     player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,100,5));
 
-    Cinematic.getInstance().getConfig().set("recording", false);
-    PlayerHandler.sendMessage("¡La cinemática fue guardada correctamente!", player);
-    player.sendMessage(ChatUtils.format("Duración: " + CinematicHelper.duration + "s, FPS: " + CinematicHelper.frameRate + ", Nombre: " + CinematicHelper.cinematicName));
-    player.playSound(player.getLocation(), Sound.BLOCK_CHEST_CLOSE,1,1.25f);
-    player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP,1,1.25f);
-
+    MotionCore.getInstance().getConfig().set("recording", false);
     CinematicHelper.frameRate = 0;
     CinematicHelper.frame = 1;
     CinematicHelper.duration = 0;
-
     CinematicHelper.cinematicTask.cancel(true);
     Bukkit.getScheduler().cancelTask(CinematicHelper.durationTask);
 
@@ -92,14 +85,14 @@ public class CinematicManager {
 
 
   public void create(String name, Player player, int frameRate) {
-    FileApi.createFolder(name, cinematicsFolder);
+    PluginFileAPI.createFolderInFolder(name, cinematicsFolder);
 
-    var cinematic = FileApi.getFolder(name, cinematicsFolder);
+    var cinematic = PluginFileAPI.getFolder(name, cinematicsFolder);
 
-    FileApi.createYAMLFile(cinematic, "properties");
+    PluginFileAPI.createYAMLFile(cinematic, "properties");
 
-    var file = FileApi.getFile(cinematic, "properties");
-    var properties = FileApi.getFileConfig(file);
+    var file = PluginFileAPI.getFile(cinematic, "properties");
+    var properties = PluginFileAPI.getFileConfig(file);
 
     properties.set("author", player.getName());
     properties.set("frameRate", frameRate);
@@ -109,7 +102,7 @@ public class CinematicManager {
     CinematicHelper.previousLocation = player.getLocation();
     CinematicHelper.previousGamemode = player.getGameMode();
 
-    Cinematic.getInstance().getConfig().set("recording", true);
+    MotionCore.getInstance().getConfig().set("recording", true);
     player.setGameMode(GameMode.SPECTATOR);
     player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN,1,1.25f);
 

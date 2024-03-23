@@ -7,9 +7,9 @@ plugins {
   id("maven-publish")
 }
 
-group = "me.cinematic"
+group = "org.motion"
 version = "1.0"
-description = "Cinematic Tool - 1.20"
+description = "Motion Core - 1.20"
 
 repositories {
   mavenLocal()
@@ -46,11 +46,6 @@ dependencies {
   testCompileOnly("org.projectlombok:lombok:1.18.24")
   testAnnotationProcessor("org.projectlombok:lombok:1.18.24")
 
-  compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Core:2.4.8")
-  compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit:2.4.8") {isTransitive = false}
-  implementation("org.reflections:reflections:0.10.2")
-
-  compileOnly("io.lumine:Mythic-Dist:5.3.5")
 }
 
 tasks {
@@ -83,12 +78,12 @@ tasks {
   }
 
   reobfJar {
-    outputJar.set(layout.buildDirectory.file("libs/CinematicTool.jar"))
+    outputJar.set(layout.buildDirectory.file("libs/MotionCore.jar"))
   }
 
   shadowJar {
-    relocate("co.aikar.commands", "me.cinematic.acf")
-    relocate("co.aikar.locales", "me.cinematic.locales")
+    relocate("co.aikar.commands", "org.motion.acf")
+    relocate("co.aikar.locales", "org.motion.locales")
   }
 
 }
