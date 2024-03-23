@@ -2,8 +2,12 @@ package org.motion;
 
 import co.aikar.commands.PaperCommandManager;
 import lombok.Getter;
+import org.bukkit.entity.Player;
+import org.motion.player.PlayerFileHelper;
+import org.motion.player.PlayerListener;
+import org.motion.tool.CinematicHelper;
 import org.motion.utils.PluginFileAPI;
-import org.motion.tool.GlobalCommand;
+import org.motion.tool.CinematicCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -18,21 +22,37 @@ public final class MotionCore extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    Bukkit.getConsoleSender().sendMessage("[MotionCore] » Cargando herramienta...");
+    MotionCore.logConsoleMessage("Cargando herramienta...");
 
     instance = this;
     saveDefaultConfig();
 
-    new PaperCommandManager(this).registerCommand(new GlobalCommand());
-    PluginFileAPI.createFolderInFolder("cinematics");
+    new PaperCommandManager(this).registerCommand(new CinematicCommand());
 
-    Bukkit.getConsoleSender().sendMessage("[MotionCore] » La herramienta se activó correctamente.");
+    PluginFileAPI.createFolderInFolder("cinematics");
+    PluginFileAPI.createFolderInFolder("players");
+    Bukkit.getPluginManager().registerEvents(new PlayerListener(), this);
+
+    MotionCore.logConsoleMessage("La herramienta se activó correctamente.");
   }
 
 
   @Override
   public void onDisable() {
-    Bukkit.getConsoleSender().sendMessage("[MotionCore] » La herramienta se apagó correctamente.");
+    MotionCore.logConsoleMessage("Apagando herramienta...");
+
+    for (Player each : Bukkit.getOnlinePlayers()) {
+      var playerFileHelper = new PlayerFileHelper(each);
+
+      if (!playerFileHelper.getStatusMode(PlayerFileHelper.Status.CHILLING)) {
+        CinematicHelper.stopToolOnPlayer(each);
+      }
+    }
+
+    MotionCore.logConsoleMessage("La herramienta se apagó correctamente.");
   }
+
+
+  public static void logConsoleMessage(String text) {Bukkit.getConsoleSender().sendMessage("[MotionCore] » " + text);}
 
 }

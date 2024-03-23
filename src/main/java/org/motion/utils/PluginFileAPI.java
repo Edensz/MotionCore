@@ -1,6 +1,5 @@
 package org.motion.utils;
 
-import org.bukkit.Bukkit;
 import org.motion.MotionCore;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -48,17 +47,22 @@ public class PluginFileAPI {
 
   //* - Functions to manage files in a more optimal way. -
 
+  //? Method to delete a folder and its contents within another folder
   public static void deleteFolderInFolder(String folderName, String name) {
+    // Get the parent folder path
     var path = getFolder(folderName, MotionCore.getInstance().getDataFolder());
+    // Get the folder to delete within the parent folder
     var cinematic = getFolder(name, path);
 
+    // Get a list of files within the folder to delete
     File[] files = cinematic.listFiles();
+    // Delete each file within the folder
     if (files != null) for (File file : files) file.delete();
 
+    // Delete the folder itself
     cinematic.delete();
 
-    Bukkit.getConsoleSender().sendMessage("" + path);
-    Bukkit.getConsoleSender().sendMessage("" + getFolder(name, path));
+    // Save the plugin configuration
     MotionCore.getInstance().saveConfig();
   }
 

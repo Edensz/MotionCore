@@ -5,8 +5,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
-public class PlayerHandler {
 
+public class PlayerHandler {
 
   //* - Functions to manage players instantly. -
 
@@ -33,15 +33,6 @@ public class PlayerHandler {
 
 
   //* - Delayed functions to manage players. -
-
-  //? Method to send a delayed message to the player
-  public static void sendDelayedMessage(String text, Player audience, int delay) {
-    // Schedule a task to run after a specified delay
-    Bukkit.getScheduler().runTaskLater(MotionCore.getInstance(), () -> {
-      // Send the message to the player
-      PlayerHandler.sendMessage(text, audience);
-    }, delay);
-  }
 
   //? Method to play a delayed sound for the player
   public static void playDelayedSound(Sound sound, float pitch, Player audience, int delay) {

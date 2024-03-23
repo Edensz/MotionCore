@@ -1,8 +1,7 @@
 package org.motion.tool;
 
 import org.motion.MotionCore;
-import org.motion.utils.PlayerHandler;
-import org.motion.utils.ChatUtils;
+import org.motion.player.PlayerFileHelper;
 import org.motion.utils.PluginFileAPI;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
@@ -16,24 +15,34 @@ import java.util.concurrent.TimeUnit;
 
 
 public class CinematicManager {
+  public CinematicManager(Player player) {
+    this.player = player;
+  }
+
+  private final Player player;
   private final File cinematicsFolder = PluginFileAPI.getFolder("cinematics");
-  private static ScheduledFuture<?> task;
+  public ScheduledFuture<?> task;
 
 
-  protected void play(String name, Player audience) {
-    final var previousLocation = audience.getLocation();
-    final var previousGamemode = audience.getGameMode();
+  public void play(String name) {
+    final var playerFileHelper = new PlayerFileHelper(player);
+    final var previousLocation = player.getLocation();
+    final var previousGamemode = player.getGameMode();
     final int[] frame = {1};
 
     final var properties = CinematicHelper.getProperties(name);
 
-    audience.setGameMode(GameMode.SPECTATOR);
+    playerFileHelper.updateStatusAndLocation(PlayerFileHelper.Status.WATCHING);
+    player.setGameMode(GameMode.SPECTATOR);
 
     task = MotionCore.getInstance().getService().scheduleWithFixedDelay(() -> {
-      if (frame[0] >= properties.getInt("totalFrames")) {
+      if (frame[0] >= properties.getInt("totalFrames") || !player.isOnline()) {
+        if (player.isOnline()) playerFileHelper.updateStatusAndLocation(PlayerFileHelper.Status.CHILLING);
+
+        Bukkit.getServer().getConsoleSender().sendMessage("");
         Bukkit.getScheduler().runTask(MotionCore.getInstance(), () -> {
-          audience.setGameMode(previousGamemode);
-          audience.teleport(previousLocation);
+          player.setGameMode(previousGamemode);
+          player.teleport(previousLocation);
         });
 
         frame[0] = 1;
@@ -53,14 +62,14 @@ public class CinematicManager {
 
       if (world == null) return;
 
-      Bukkit.getScheduler().runTask(MotionCore.getInstance(), () -> audience.teleport(new Location(Bukkit.getWorld(world), x, y, z, (float) yaw, (float) pitch)));
+      Bukkit.getScheduler().runTask(MotionCore.getInstance(), () -> player.teleport(new Location(Bukkit.getWorld(world), x, y, z, (float) yaw, (float) pitch)));
 
       frame[0]++;
     }, 0, 1000/properties.getInt("frameRate"), TimeUnit.MILLISECONDS);
   }
 
 
-  public void finish(Player player) {
+  public void finish() {
     var cinematic = PluginFileAPI.getFolder(CinematicHelper.cinematicName, cinematicsFolder);
     var file = PluginFileAPI.getFile(cinematic, "properties");
     var properties = PluginFileAPI.getFileConfig(file);
@@ -72,7 +81,8 @@ public class CinematicManager {
     player.setGameMode(CinematicHelper.previousGamemode);
     player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,100,5));
 
-    MotionCore.getInstance().getConfig().set("recording", false);
+    new PlayerFileHelper(player).updateStatusAndLocation(PlayerFileHelper.Status.CHILLING);
+
     CinematicHelper.frameRate = 0;
     CinematicHelper.frame = 1;
     CinematicHelper.duration = 0;
@@ -84,7 +94,7 @@ public class CinematicManager {
   }
 
 
-  public void create(String name, Player player, int frameRate) {
+  public void create(String name, int frameRate) {
     PluginFileAPI.createFolderInFolder(name, cinematicsFolder);
 
     var cinematic = PluginFileAPI.getFolder(name, cinematicsFolder);
@@ -102,10 +112,10 @@ public class CinematicManager {
     CinematicHelper.previousLocation = player.getLocation();
     CinematicHelper.previousGamemode = player.getGameMode();
 
-    MotionCore.getInstance().getConfig().set("recording", true);
     player.setGameMode(GameMode.SPECTATOR);
     player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN,1,1.25f);
 
+    new PlayerFileHelper(player).updateStatusAndLocation(PlayerFileHelper.Status.RECORDING);
     CinematicHelper.record(player, cinematic, frameRate);
 
     try {properties.save(file);}
