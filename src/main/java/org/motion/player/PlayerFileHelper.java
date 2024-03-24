@@ -8,29 +8,22 @@ import org.motion.utils.PluginFileAPI;
 
 
 public class PlayerFileHelper {
-  public PlayerFileHelper(Player player) {
-    this.player = player;
-    this.name = player.getName();
-  }
-
-  private final Player player;
-  private final String name;
   public enum Status {WATCHING,RECORDING,CHILLING}
 
 
-  public boolean getStatusMode(@NotNull Status status) {
+  public static boolean getStatusMode(Player player, @NotNull Status status) {
     var key = status.name().toLowerCase();
-    var file = PluginFileAPI.getFile(PlayerFileManager.playerFolder, name);
+    var file = PluginFileAPI.getFile(PlayerFileManager.playerFolder, player.getName());
     var config = PluginFileAPI.getFileConfig(file);
 
     return config.getBoolean(key);
   }
 
 
-  public void updateStatusAndLocation(@NotNull Status status) {
+  public static void updateStatusAndLocation(Player player, @NotNull Status status) {
     final var key = status.name().toLowerCase();
 
-    final var file = PluginFileAPI.getFile(PlayerFileManager.playerFolder, name);
+    final var file = PluginFileAPI.getFile(PlayerFileManager.playerFolder, player.getName());
     final var config = PluginFileAPI.getFileConfig(file);
     final var fileManager = new PlayerFileManager(player);
 
@@ -48,7 +41,6 @@ public class PlayerFileHelper {
     }
 
     Data.set(player, key, PersistentDataType.BOOLEAN, true);
-    player.sendMessage(key);
     config.set(key, "true");
   }
 

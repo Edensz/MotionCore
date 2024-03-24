@@ -32,7 +32,7 @@ public class CinematicCommand extends BaseCommand {
 
   @Subcommand("play")
   private void play(CommandSender commandSender, String name, @Flags("others") Player audience) {
-    new CinematicManager(audience).play(name);
+    new CinematicManager(audience, name.toLowerCase()).play();
 
     if (!(commandSender instanceof Player sender)) return;
 
@@ -46,15 +46,14 @@ public class CinematicCommand extends BaseCommand {
   private void finish(CommandSender commandSender) {
     if (!(commandSender instanceof Player sender)) return;
 
-    if (!new PlayerFileHelper(sender).getStatusMode(PlayerFileHelper.Status.RECORDING)) {
+    if (!PlayerFileHelper.getStatusMode(sender, PlayerFileHelper.Status.RECORDING)) {
       PlayerHandler.errorMessage("¡No estás grabando ninguna cinemática!", sender);
       return;
     }
 
-    new CinematicManager(sender).finish();
+    new CinematicManager(sender, null).finish();
 
     PlayerHandler.sendMessage("#85C47F¡La cinemática fue guardada correctamente!", sender);
-    PlayerHandler.playSound(Sound.BLOCK_CHEST_CLOSE,0.85F, sender);
     PlayerHandler.playSound(Sound.ENTITY_PLAYER_LEVELUP,1.85F, sender);
     PlayerHandler.playSound(Sound.UI_BUTTON_CLICK, 1.25f, sender);
   }
@@ -64,7 +63,7 @@ public class CinematicCommand extends BaseCommand {
   private void record(CommandSender commandSender, String cinematicName, int frameRate) {
     if (!(commandSender instanceof Player sender)) return;
 
-    if (new PlayerFileHelper(sender).getStatusMode(PlayerFileHelper.Status.RECORDING)) {
+    if (PlayerFileHelper.getStatusMode(sender, PlayerFileHelper.Status.RECORDING)) {
       PlayerHandler.errorMessage("¡No puedes grabar dos cinemáticas al mismo tiempo!", sender);
       return;
     }
@@ -81,12 +80,7 @@ public class CinematicCommand extends BaseCommand {
       PlayerHandler.playDelayedSound(Sound.UI_BUTTON_CLICK, pitch, sender, delay);
     }
 
-    Bukkit.getScheduler().runTaskLater(MotionCore.getInstance(), () -> {
-      new CinematicManager(sender).create(cinematicName, frameRate);
-      PlayerHandler.playSound(Sound.BLOCK_CHEST_OPEN,0.85F, sender);
-      PlayerHandler.playSound(Sound.ENTITY_PLAYER_LEVELUP, 1.25f, sender);
-      PlayerHandler.playSound(Sound.UI_BUTTON_CLICK, 1.25f, sender);
-    }, 100);
+    Bukkit.getScheduler().runTaskLater(MotionCore.getInstance(), () -> new CinematicManager(sender, cinematicName).create(frameRate), 100);
   }
 
 }

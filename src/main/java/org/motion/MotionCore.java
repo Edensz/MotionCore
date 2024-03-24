@@ -5,7 +5,7 @@ import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.motion.player.PlayerFileHelper;
 import org.motion.player.PlayerListener;
-import org.motion.tool.CinematicHelper;
+import org.motion.tool.CinematicManager;
 import org.motion.utils.PluginFileAPI;
 import org.motion.tool.CinematicCommand;
 import org.bukkit.Bukkit;
@@ -42,10 +42,8 @@ public final class MotionCore extends JavaPlugin {
     MotionCore.logConsoleMessage("Apagando herramienta...");
 
     for (Player each : Bukkit.getOnlinePlayers()) {
-      var playerFileHelper = new PlayerFileHelper(each);
-
-      if (!playerFileHelper.getStatusMode(PlayerFileHelper.Status.CHILLING)) {
-        CinematicHelper.stopToolOnPlayer(each);
+      if (!PlayerFileHelper.getStatusMode(each, PlayerFileHelper.Status.CHILLING)) {
+        new CinematicManager(each, null).finish();
       }
     }
 

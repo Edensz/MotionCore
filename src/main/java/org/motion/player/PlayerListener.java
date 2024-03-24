@@ -15,10 +15,9 @@ public class PlayerListener implements Listener {
   @EventHandler (priority = EventPriority.HIGHEST)
   private void quit(PlayerQuitEvent event) {
     final var player = event.getPlayer();
-    final var playerFileHelper = new PlayerFileHelper(player);
 
-    if (playerFileHelper.getStatusMode(PlayerFileHelper.Status.RECORDING)) {
-      new CinematicManager(player).finish();
+    if (PlayerFileHelper.getStatusMode(player, PlayerFileHelper.Status.RECORDING)) {
+      new CinematicManager(player, null).finish();
     }
   }
 
@@ -26,11 +25,10 @@ public class PlayerListener implements Listener {
   @EventHandler
   private void join(PlayerJoinEvent event) {
     final var player = event.getPlayer();
-    final var playerFileHelper = new PlayerFileHelper(player);
     final var isFileCreated = PluginFileAPI.getFile(PlayerFileManager.playerFolder, player.getName()).exists();
 
-    if (isFileCreated && !playerFileHelper.getStatusMode(PlayerFileHelper.Status.CHILLING)) {
-      CinematicHelper.stopToolOnPlayer(player);
+    if (isFileCreated && !PlayerFileHelper.getStatusMode(player, PlayerFileHelper.Status.CHILLING)) {
+      new CinematicManager(player, null).finish();
     }
 
     else new PlayerFileManager(player).create();
