@@ -20,11 +20,11 @@ public class PlayerFileManager {
 
   public void create() {
     PluginFileAPI.createYAMLFile(playerFolder, player.getName());
-    update(false, false, true);
+    update(false, false, true, true, true);
   }
 
 
-  public void update(boolean watching, boolean recording, boolean chilling) {
+  public void update(boolean watching, boolean recording, boolean chilling, boolean updateLocation, boolean updateGamemode) {
     final var file = PluginFileAPI.getFile(playerFolder, player.getName());
     final var config = PluginFileAPI.getFileConfig(file);
     final var location = player.getLocation();
@@ -33,14 +33,16 @@ public class PlayerFileManager {
     config.set("recording", recording);
     config.set("chilling", chilling);
 
-    config.set("gamemode", player.getGameMode().name().toLowerCase());
+    if (updateGamemode) config.set("gamemode", player.getGameMode().name().toLowerCase());
 
-    config.set("location.x_value", location.getX());
-    config.set("location.y_value", location.getY());
-    config.set("location.z_value", location.getZ());
-    config.set("location.pitch", location.getPitch());
-    config.set("location.yaw", location.getYaw());
-    config.set("location.world", location.getWorld().getName());
+    if (updateLocation) {
+      config.set("location.x_value", location.getX());
+      config.set("location.y_value", location.getY());
+      config.set("location.z_value", location.getZ());
+      config.set("location.pitch", location.getPitch());
+      config.set("location.yaw", location.getYaw());
+      config.set("location.world", location.getWorld().getName());
+    }
 
     try {config.save(file);}
     catch (IOException ignored) {}

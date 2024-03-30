@@ -1,9 +1,7 @@
 package org.motion.player;
 
 import org.bukkit.entity.Player;
-import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
-import org.motion.utils.Data;
 import org.motion.utils.PluginFileAPI;
 
 
@@ -11,7 +9,7 @@ public class PlayerFileHelper {
   public enum Status {WATCHING,RECORDING,CHILLING}
 
 
-  public static boolean getStatusMode(Player player, @NotNull Status status) {
+  public static boolean getStatusMode(Player player, Status status) {
     var key = status.name().toLowerCase();
     var file = PluginFileAPI.getFile(PlayerFileManager.playerFolder, player.getName());
     var config = PluginFileAPI.getFileConfig(file);
@@ -20,7 +18,7 @@ public class PlayerFileHelper {
   }
 
 
-  public static void updateStatusAndLocation(Player player, @NotNull Status status) {
+  public static void updatePlayerFile(Player player, @NotNull Status status, boolean onlyStatus) {
     final var key = status.name().toLowerCase();
 
     final var file = PluginFileAPI.getFile(PlayerFileManager.playerFolder, player.getName());
@@ -31,16 +29,14 @@ public class PlayerFileHelper {
       final var eachKey = playerStatus.name().toLowerCase();
 
       config.set(eachKey, "false");
-      Data.set(player, eachKey, PersistentDataType.BOOLEAN, false);
     }
 
     switch (status) {
-      case CHILLING -> fileManager.update(false, false, true);
-      case RECORDING -> fileManager.update(false, true, false);
-      case WATCHING -> fileManager.update(true, false, false);
+      case CHILLING -> fileManager.update(false, false, true, !onlyStatus, !onlyStatus);
+      case RECORDING -> fileManager.update(false, true, false, !onlyStatus, !onlyStatus);
+      case WATCHING -> fileManager.update(true, false, false, !onlyStatus, !onlyStatus);
     }
 
-    Data.set(player, key, PersistentDataType.BOOLEAN, true);
     config.set(key, "true");
   }
 
