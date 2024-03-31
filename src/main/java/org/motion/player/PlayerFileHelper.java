@@ -4,17 +4,29 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.motion.utils.PluginFileAPI;
 
+import java.io.IOException;
+
 
 public class PlayerFileHelper {
   public enum Status {WATCHING,RECORDING,CHILLING}
 
 
-  public static boolean getStatusMode(Player player, Status status) {
+  public static void setCreatingMode(Player player, boolean creatingMode, String cinematicName) {
+    final var playerFile = PluginFileAPI.getFile(PlayerFileManager.playerFolder, player.getName());
+    final var playerConfig = PluginFileAPI.getFileConfig(playerFile);
+
+    playerConfig.set("movie.creating", creatingMode);
+    playerConfig.set("movie.name", cinematicName);
+
+    try {playerConfig.save(playerFile);}
+    catch (IOException ignored) {}
+  }
+
+
+  public static boolean isStatusDeactivated(@NotNull Player player, @NotNull Status status) {
     var key = status.name().toLowerCase();
     var file = PluginFileAPI.getFile(PlayerFileManager.playerFolder, player.getName());
-    var config = PluginFileAPI.getFileConfig(file);
-
-    return config.getBoolean(key);
+    return !PluginFileAPI.getFileConfig(file).getBoolean(key);
   }
 
 

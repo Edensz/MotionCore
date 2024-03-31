@@ -50,7 +50,7 @@ public final class MotionCore extends JavaPlugin {
     MotionCore.logConsoleMessage("Apagando herramienta...");
 
     for (Player each : Bukkit.getOnlinePlayers()) {
-      if (!PlayerFileHelper.getStatusMode(each, PlayerFileHelper.Status.CHILLING)) {
+      if (PlayerFileHelper.isStatusDeactivated(each, PlayerFileHelper.Status.CHILLING)) {
         new CinematicManager(each, null).finish();
       }
     }

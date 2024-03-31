@@ -5,7 +5,8 @@ import co.aikar.commands.annotation.*;
 import org.motion.MotionCore;
 import org.motion.player.PlayerFileHelper;
 import org.motion.utils.ChatUtils;
-import org.motion.utils.PlayerHandler;
+import org.motion.utils.MenuAPI;
+import org.motion.player.PlayerHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
@@ -21,9 +22,9 @@ public class CinematicCommand extends BaseCommand {
   @Default
   private void panel(CommandSender commandSender) {
     if (!(commandSender instanceof Player sender)) return;
-
-    new CinematicPanel(sender, CinematicPanel.PanelMode.VIEW).open();
+    new CinematicPanel(sender, MenuAPI.PanelMode.VIEW, null).open();
   }
+
 
   @Subcommand("help")
   @CatchUnknown @Default
@@ -52,6 +53,7 @@ public class CinematicCommand extends BaseCommand {
     PlayerHandler.playSound(Sound.ITEM_SHIELD_BREAK,1.5F, sender);
   }
 
+
   @Subcommand("play")
   @CommandCompletion("@Cinematics")
   private void play(CommandSender commandSender, String name, @Optional @Flags("other") Player audience) {
@@ -60,15 +62,10 @@ public class CinematicCommand extends BaseCommand {
       else return;
     }
 
-    if (!PlayerFileHelper.getStatusMode(audience, PlayerFileHelper.Status.CHILLING)) return;
+    if (PlayerFileHelper.isStatusDeactivated(audience, PlayerFileHelper.Status.CHILLING)) return;
 
-    new CinematicManager(audience, name).play();
-
-    if (!(commandSender instanceof Player sender)) return;
-
-    PlayerHandler.sendMessage("#CFB39CReproduciendo la cinemática #D78E51" + name + "#CFB39C a #D78E51" + audience.getName() + "#CFB39C.", sender);
-    PlayerHandler.playSound(Sound.ENTITY_PLAYER_LEVELUP,1.35f, sender);
-    PlayerHandler.playSound(Sound.BLOCK_PISTON_EXTEND,1.35f, sender);
+    if (commandSender instanceof Player sender) new CinematicManager(audience, name).play(sender);
+    else new CinematicManager(audience, name).play(null);
   }
 
 
@@ -79,8 +76,7 @@ public class CinematicCommand extends BaseCommand {
       else return;
     }
 
-    if (!PlayerFileHelper.getStatusMode(audience, PlayerFileHelper.Status.WATCHING)) return;
-
+    if (PlayerFileHelper.isStatusDeactivated(audience, PlayerFileHelper.Status.WATCHING)) return;
     PlayerFileHelper.updatePlayerFile(audience, PlayerFileHelper.Status.CHILLING, true);
 
     if (!(commandSender instanceof Player sender)) return;
@@ -95,17 +91,19 @@ public class CinematicCommand extends BaseCommand {
   private void finish(CommandSender commandSender) {
     if (!(commandSender instanceof Player sender)) return;
 
-    if (!PlayerFileHelper.getStatusMode(sender, PlayerFileHelper.Status.RECORDING)) {
+    if (PlayerFileHelper.isStatusDeactivated(sender, PlayerFileHelper.Status.RECORDING)) {
       PlayerHandler.errorMessage("¡No estás grabando ninguna cinemática!", sender);
       return;
     }
 
     new CinematicManager(sender, null).finish();
 
-    PlayerHandler.sendMessage("#85C47F¡La cinemática fue guardada correctamente!", sender);
-    PlayerHandler.playSound(Sound.BLOCK_CHEST_CLOSE,1.25F, sender);
-    PlayerHandler.playSound(Sound.ENTITY_PLAYER_LEVELUP,1.85F, sender);
-    PlayerHandler.playSound(Sound.UI_BUTTON_CLICK, 1.25f, sender);
+    Bukkit.getScheduler().runTaskLater(MotionCore.getInstance(), () -> {
+      PlayerHandler.sendMessage("#85C47F¡La cinemática fue guardada correctamente!", sender);
+      PlayerHandler.playSound(Sound.BLOCK_CHEST_CLOSE,1.25F, sender);
+      PlayerHandler.playSound(Sound.ENTITY_PLAYER_LEVELUP,1.85F, sender);
+      PlayerHandler.playSound(Sound.UI_BUTTON_CLICK, 1.25f, sender);
+    }, 5);
   }
 
 
@@ -113,17 +111,23 @@ public class CinematicCommand extends BaseCommand {
   private void create(CommandSender commandSender, String cinematicName, int frameRate, @Optional CinematicHelper.CinematicType cinematicType) {
     if (!(commandSender instanceof Player sender)) return;
 
-    if (cinematicType == null) cinematicType = CinematicHelper.CinematicType.BASIC;
-    else if (cinematicType != CinematicHelper.CinematicType.BASIC) {
-      switch (cinematicType) {
-        case MOVIE -> new CinematicPanel(sender, CinematicPanel.PanelMode.MOVIE).open();
-        case CHAIN -> new CinematicPanel(sender, CinematicPanel.PanelMode.CHAIN).open();
-      }
+    if (CinematicHelper.doesCinematicExist(cinematicName)) {
+      PlayerHandler.errorMessage("El nombre insertado ya está siendo usado por otra cinemática.", sender);
       return;
     }
-
-    if (!PlayerFileHelper.getStatusMode(sender, PlayerFileHelper.Status.CHILLING)) {
+    if (PlayerFileHelper.isStatusDeactivated(sender, PlayerFileHelper.Status.CHILLING)) {
       PlayerHandler.errorMessage("¡No puedes grabar dos cinemáticas al mismo tiempo!", sender);
+      return;
+    }
+    if (cinematicType == null) cinematicType = CinematicHelper.CinematicType.BASIC;
+    if (cinematicType != CinematicHelper.CinematicType.BASIC) {
+      switch (cinematicType) {
+        case MOVIE -> {
+          new CinematicManager(sender, cinematicName).create(frameRate, CinematicHelper.CinematicType.MOVIE, false);
+          new CinematicPanel(sender, CinematicPanel.PanelMode.MOVIE, cinematicName).open();
+        }
+        case CHAIN -> new CinematicPanel(sender, CinematicPanel.PanelMode.CHAIN, null).open();
+      }
       return;
     }
 
@@ -139,9 +143,9 @@ public class CinematicCommand extends BaseCommand {
       PlayerHandler.playDelayedSound(Sound.UI_BUTTON_CLICK, pitch, sender, delay);
     }
 
-    final var finalCinematicType = cinematicType.name().toLowerCase();
+    final var finalCinematicType = cinematicType;
     Bukkit.getScheduler().runTaskLater(MotionCore.getInstance(), () -> {
-      new CinematicManager(sender, cinematicName).create(frameRate, finalCinematicType);
+      new CinematicManager(sender, cinematicName).create(frameRate, finalCinematicType, true);
       PlayerHandler.playSound(Sound.BLOCK_CHEST_OPEN,1.25F, sender);
       PlayerHandler.playSound(Sound.ENTITY_PLAYER_LEVELUP, 1.25f, sender);
       PlayerHandler.playSound(Sound.UI_BUTTON_CLICK, 1.25f, sender);

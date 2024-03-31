@@ -1,9 +1,10 @@
-package org.motion.utils;
+package org.motion.player;
 
 import org.motion.MotionCore;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.motion.utils.ChatUtils;
 
 
 public class PlayerHandler {

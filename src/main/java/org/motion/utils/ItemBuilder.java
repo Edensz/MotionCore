@@ -42,7 +42,7 @@ public class ItemBuilder {
 
     public ItemBuilder setID(String id) {
         this.im = this.is.getItemMeta();
-        this.im.getPersistentDataContainer().set(new NamespacedKey(MotionCore.getInstance(), "id"), PersistentDataType.STRING, id.toLowerCase());
+        this.im.getPersistentDataContainer().set(new NamespacedKey(MotionCore.getInstance(), "id"), PersistentDataType.STRING, id);
         this.is.setItemMeta(this.im);
         return this;
     }
@@ -108,19 +108,20 @@ public class ItemBuilder {
         return this;
     }
 
-    public ItemBuilder setGlint() {
-        this.im = this.is.getItemMeta();
-        this.im.addEnchant(Enchantment.DURABILITY,1,true);
-        this.im.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        this.is.setItemMeta(this.im);
-        return this;
-    }
-
-    public ItemBuilder removeGlint() {
-        this.im = this.is.getItemMeta();
-        for (Enchantment enchantment : Enchantment.values()) this.im.removeEnchant(enchantment);
-        this.is.setItemMeta(this.im);
-        return this;
+    public ItemBuilder setGlint(boolean glint) {
+        if (glint) {
+            this.im = this.is.getItemMeta();
+            this.im.addEnchant(Enchantment.DURABILITY,1,true);
+            this.im.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            this.is.setItemMeta(this.im);
+            return this;
+        }
+        else {
+            this.im = this.is.getItemMeta();
+            for (Enchantment enchantment : Enchantment.values()) this.im.removeEnchant(enchantment);
+            this.is.setItemMeta(this.im);
+            return this;
+        }
     }
 
     public ItemBuilder addEnchants(Map<Enchantment, Integer> enchantments) {

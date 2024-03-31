@@ -33,6 +33,8 @@ public class PlayerFileManager {
     config.set("recording", recording);
     config.set("chilling", chilling);
 
+    config.set("movie.creating", false);
+
     if (updateGamemode) config.set("gamemode", player.getGameMode().name().toLowerCase());
 
     if (updateLocation) {

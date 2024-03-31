@@ -1,6 +1,7 @@
 package org.motion.tool;
 
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,10 +25,13 @@ public class CinematicHelper {
   }
 
 
-  protected enum CinematicType {BASIC, MOVIE, CHAIN}
+  public static void displayTransitionScreen(@NotNull Player player) {player.sendTitle("㊭", "", 35, 20, 35);}
+
+
+  public enum CinematicType {BASIC, MOVIE, CHAIN}
 
   @Nullable
-  protected static ItemStack setCinematicIcon(String cinematicName) {
+  protected static ItemStack getCinematicIcon(String cinematicName) {
     final var cinematic = PluginFileAPI.getFolder(cinematicName, CinematicHelper.cinematicsFolder);
     final var cinematicProperties = PluginFileAPI.getFile(cinematic, "properties");
     final var cinematicConfig = PluginFileAPI.getFileConfig(cinematicProperties);
@@ -38,14 +42,27 @@ public class CinematicHelper {
     final var cinematicInfoBaseColor = getCinematicInfoColor(cinematicType, true);
     final var cinematicInfoLightColor = getCinematicInfoColor(cinematicType, false);
 
-    return new ItemBuilder(getCinematicIconMaterial(cinematicType)).setDisplayName("&7• " + cinematicInfoBaseColor + cinematicName + " &7•").setLore(
+    if (!cinematicType.equals("movie")) return new ItemBuilder(getCinematicIconMaterial(cinematicType)).setDisplayName("&7• " + cinematicInfoBaseColor + cinematicName + " &7•").setLore(
             "",
             "&7•&r " + cinematicInfoBaseColor + "Nombre del Autor&7: " + cinematicInfoLightColor + cinematicConfig.getString("properties.author"),
             "&7•&r " + cinematicInfoBaseColor + "Duración Total&7: " + cinematicInfoLightColor + cinematicConfig.getString("properties.totalDuration"),
             "&7•&r " + cinematicInfoBaseColor + "Cuadros por Segundo&7: " + cinematicInfoLightColor + cinematicConfig.getString("properties.frameRate"),
             "&7•&r " + cinematicInfoBaseColor + "Fotogramas grabados&7: " + cinematicInfoLightColor + cinematicConfig.getString("properties.framesRecorded"),
             ""
-    ).setGlint().setID(cinematicName).build();
+    ).setGlint(true).setID(cinematicName).build();
+
+    else return new ItemBuilder(getCinematicIconMaterial(cinematicType)).setDisplayName("&7• " + cinematicInfoBaseColor + cinematicName + " &7•").setLore(
+            "",
+            "&7•&r " + cinematicInfoBaseColor + "Nombre del Autor&7: " + cinematicInfoLightColor + cinematicConfig.getString("properties.author"),
+            "&7•&r " + cinematicInfoBaseColor + "Duración Total&7: " + cinematicInfoLightColor + cinematicConfig.getString("properties.totalDuration"),
+            "&7•&r " + cinematicInfoBaseColor + "Cuadros por Segundo&7: " + cinematicInfoLightColor + cinematicConfig.getString("properties.frameRate"),
+            "&7•&r " + cinematicInfoBaseColor + "Fotogramas grabados&7: " + cinematicInfoLightColor + cinematicConfig.getString("properties.framesRecorded"),
+            "",
+            "&7•&r " + cinematicInfoBaseColor + "Barras Negras&7: " + cinematicInfoLightColor + cinematicConfig.getString("movie.letterBoxBars"),
+            "&7•&r " + cinematicInfoBaseColor + "Interpolación&7: " + cinematicInfoLightColor + cinematicConfig.getString("movie.interpolation"),
+            "&7•&r " + cinematicInfoBaseColor + "Música&7: " + cinematicInfoLightColor + cinematicConfig.getString("movie.musicToPlay"),
+            ""
+    ).setGlint(true).setID(cinematicName).build();
   }
 
   protected static Material getCinematicIconMaterial(@NotNull String cinematicType) {
@@ -53,9 +70,9 @@ public class CinematicHelper {
     var cinematicIconMaterial = Material.BARRIER;
 
     switch (cinematicType) {
-      case "chain" -> cinematicIconMaterial = Material.WARPED_SIGN;
-      case "basic" -> cinematicIconMaterial = Material.OAK_SIGN;
-      case "movie" -> cinematicIconMaterial = Material.DARK_OAK_SIGN;
+      case "chain" -> cinematicIconMaterial = Material.WARPED_HANGING_SIGN;
+      case "basic" -> cinematicIconMaterial = Material.OAK_HANGING_SIGN;
+      case "movie" -> cinematicIconMaterial = Material.CRIMSON_HANGING_SIGN;
     }
 
     return cinematicIconMaterial;
@@ -76,8 +93,8 @@ public class CinematicHelper {
         cinematicIconLightColor = "#D5A885";
       }
       case "movie" -> {
-        cinematicIconBaseColor = "#ADADAD";
-        cinematicIconLightColor = "#CBCBCB";
+        cinematicIconBaseColor = "#BF5D5D";
+        cinematicIconLightColor = "#BA6C6C";
       }
     }
 

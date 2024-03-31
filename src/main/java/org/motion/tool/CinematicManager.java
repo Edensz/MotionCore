@@ -5,7 +5,7 @@ import org.motion.MotionCore;
 import org.motion.player.PlayerFileHelper;
 import org.motion.utils.CancellableScheduledTask;
 import org.motion.utils.ChatUtils;
-import org.motion.utils.PlayerHandler;
+import org.motion.player.PlayerHandler;
 import org.motion.utils.PluginFileAPI;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
@@ -18,14 +18,14 @@ import java.util.concurrent.TimeUnit;
 
 public class CinematicManager {
   private final Player player;
-  private final String name;
+  private final String cinematicName;
   private File cinematicFolder = null;
   private File cinematicProperties = null;
   private YamlConfiguration cinematicConfig = null;
 
   public CinematicManager(Player player, @Nullable String cinematicName) {
     this.player = player;
-    this.name = cinematicName;
+    this.cinematicName = cinematicName;
 
     if (cinematicName != null) {
       this.cinematicFolder = PluginFileAPI.getFolder(cinematicName, CinematicHelper.cinematicsFolder);
@@ -35,10 +35,23 @@ public class CinematicManager {
   }
 
 
-  public void play() {
-    if (!CinematicHelper.doesCinematicExist(name)) {
+  public void play(@Nullable Player sender) {
+    if (!CinematicHelper.doesCinematicExist(cinematicName)) {
       PlayerHandler.errorMessage("¡La cinemática insertada no existe!", player);
       return;
+    }
+
+    final var cinematicType = cinematicConfig.getString("properties.type");
+    if (cinematicType == null) return;
+    final var movieCinematic = cinematicType.equals("movie");
+
+    var initialDelay = 0;
+    if (movieCinematic) {
+      final var interpolation = cinematicConfig.getBoolean("movie.interpolation");
+      if (interpolation) {
+        CinematicHelper.displayTransitionScreen(player);
+        initialDelay = 40;
+      }
     }
 
     final var frameRate = cinematicConfig.getInt("properties.frameRate");
@@ -47,54 +60,75 @@ public class CinematicManager {
     final int[] duration = {0};
     final int[] framesPerSecond = {0};
 
-    PlayerFileHelper.updatePlayerFile(player, PlayerFileHelper.Status.WATCHING, false);
-    player.setGameMode(GameMode.SPECTATOR);
-
-    for (Player each : Bukkit.getOnlinePlayers()) {
-      if (!each.getGameMode().equals(GameMode.SPECTATOR)) continue;
-      player.hidePlayer(MotionCore.getInstance(), each);
+    if (sender != null) {
+      if (framesRecorded == 0) {
+        PlayerHandler.errorMessage("La cinemática que intentaste reproducir no cuenta con ningún fotograma grabado, por lo tanto, será eliminada automáticamente.", sender);
+        PluginFileAPI.deleteFolderInFolder("cinematics", cinematicName);
+        return;
+      }
+      PlayerHandler.sendMessage("#CFB39CReproduciendo la cinemática #D78E51" + cinematicName + "#CFB39C a #D78E51" + player.getName() + "#CFB39C.", sender);
+      PlayerHandler.playSound(Sound.ENTITY_PLAYER_LEVELUP,1.35f, sender);
+      PlayerHandler.playSound(Sound.BLOCK_PISTON_EXTEND,1.35f, sender);
     }
 
-    var task = new CancellableScheduledTask() {
+    PlayerFileHelper.updatePlayerFile(player, PlayerFileHelper.Status.WATCHING, false);
+    Bukkit.getScheduler().runTaskLater(MotionCore.getInstance(), () -> {
+      player.setGameMode(GameMode.SPECTATOR);
 
-      @Override
-      public void run() {
-        if (frame[0] >= framesRecorded || !player.isOnline() || !PlayerFileHelper.getStatusMode(player, PlayerFileHelper.Status.WATCHING) || !CinematicHelper.doesCinematicExist(name)) {
-          this.cancel();
-          if (player.isOnline()) {
-            Bukkit.getScheduler().runTask(MotionCore.getInstance(), () -> finish());
-            return;
-          }
-        }
-
-        if (frame[0] == 1 || framesPerSecond[0] == frameRate) {
-          framesPerSecond[0] = 0;
-          duration[0]++;
-        }
-
-        final var file = PluginFileAPI.getFile(cinematicFolder, "second" + duration[0]);
-        final var config = PluginFileAPI.getFileConfig(file);
-        final var path = "frame" + frame[0] + ".";
-        final var world = config.getString(path + "world");
-
-        if (world == null) return;
-
-        Bukkit.getScheduler().runTask(MotionCore.getInstance(), () -> player.teleport(new Location(
-                Bukkit.getWorld(world),
-                config.getDouble(path + "x_value"),
-                config.getDouble(path + "y_value"),
-                config.getDouble(path + "z_value"),
-                (float) CinematicHelper.roundToNearestTenth(config.getDouble(path + "yaw")),
-                (float) CinematicHelper.roundToNearestTenth(config.getDouble(path + "pitch"))
-        )));
-
-        framesPerSecond[0]++;
-        frame[0]++;
+      for (Player each : Bukkit.getOnlinePlayers()) {
+        if (!each.getGameMode().equals(GameMode.SPECTATOR)) continue;
+        player.hidePlayer(MotionCore.getInstance(), each);
       }
 
-    };
+      var task = new CancellableScheduledTask() {
+        @Override
+        public void run() {
+          if (frame[0] >= framesRecorded || !player.isOnline() || PlayerFileHelper.isStatusDeactivated(player, PlayerFileHelper.Status.WATCHING) || !CinematicHelper.doesCinematicExist(cinematicName)) {
+            this.cancel();
+            if (player.isOnline()) {
+              Bukkit.getScheduler().runTask(MotionCore.getInstance(), () -> finish());
+              return;
+            }
+          }
 
-    task.setScheduledFuture(MotionCore.getExecutorService().scheduleWithFixedDelay(task, 0, (1000/frameRate) * 1000L, TimeUnit.MICROSECONDS));
+          if (movieCinematic) {
+            final var interpolation = cinematicConfig.getBoolean("movie.interpolation");
+            if (interpolation && frame[0] == framesRecorded - (frameRate + (frameRate/2))) CinematicHelper.displayTransitionScreen(player);
+            if (frame[0] == 1) {
+              final var musicToPlay = cinematicConfig.getString("movie.musicToPlay");
+              if (musicToPlay != null) player.playSound(player.getLocation(), musicToPlay, SoundCategory.AMBIENT, 1, 1);
+            }
+          }
+
+          if (frame[0] == 1 || framesPerSecond[0] == frameRate) {
+            framesPerSecond[0] = 0;
+            duration[0]++;
+          }
+
+          final var secondFile = PluginFileAPI.getFile(cinematicFolder, "second" + duration[0]);
+          final var secondConfig = PluginFileAPI.getFileConfig(secondFile);
+          final var framePath = "frame" + frame[0] + ".";
+          final var world = secondConfig.getString(framePath + "world");
+          if (world == null) return;
+
+          final var interpolation = cinematicConfig.getBoolean("movie.interpolation");
+          if (interpolation && (frame[0] < (framesRecorded - 100))) player.sendActionBar("㊡");
+
+          Bukkit.getScheduler().runTask(MotionCore.getInstance(), () -> player.teleport(new Location(
+                  Bukkit.getWorld(world),
+                  secondConfig.getDouble(framePath + "x_value"),
+                  secondConfig.getDouble(framePath + "y_value"),
+                  secondConfig.getDouble(framePath + "z_value"),
+                  (float) CinematicHelper.roundToNearestTenth(secondConfig.getDouble(framePath + "yaw")),
+                  (float) CinematicHelper.roundToNearestTenth(secondConfig.getDouble(framePath + "pitch"))
+          )));
+          framesPerSecond[0]++;
+          frame[0]++;
+        }
+      };
+
+      task.setScheduledFuture(MotionCore.getExecutorService().scheduleWithFixedDelay(task, 0, (1000/frameRate) * 1000L, TimeUnit.MICROSECONDS));
+    }, initialDelay);
   }
 
 
@@ -115,6 +149,7 @@ public class CinematicManager {
     if (world == null || gamemode == null) return;
 
     player.teleport(new Location(Bukkit.getWorld(world), x, y, z, (float) yaw, (float) pitch));
+    player.stopAllSounds();
 
     switch (gamemode) {
       case "survival" -> player.setGameMode(GameMode.SURVIVAL);
@@ -131,29 +166,53 @@ public class CinematicManager {
   }
 
 
-  public void create(int frameRate, String cinematicType) {
-    PluginFileAPI.createFolderInFolder(name, CinematicHelper.cinematicsFolder);
-    final var cinematic = PluginFileAPI.getFolder(name, CinematicHelper.cinematicsFolder);
+  public void create(int frameRate, CinematicHelper.CinematicType cinematicType, boolean startRecording) {
+    PluginFileAPI.createFolderInFolder(cinematicName, CinematicHelper.cinematicsFolder);
+    final var cinematic = PluginFileAPI.getFolder(cinematicName, CinematicHelper.cinematicsFolder);
 
     PluginFileAPI.createYAMLFile(cinematic, "properties");
-    PlayerFileHelper.updatePlayerFile(player, PlayerFileHelper.Status.RECORDING, false);
 
     cinematicConfig.set("properties.framesRecorded", 0);
     cinematicConfig.set("properties.totalDuration", 0);
     cinematicConfig.set("properties.author", 0);
     cinematicConfig.set("properties.frameRate", 0);
-    cinematicConfig.set("properties.type", cinematicType);
-    player.setGameMode(GameMode.SPECTATOR);
+    cinematicConfig.set("properties.type", cinematicType.name().toLowerCase());
 
-    this.record(frameRate);
+    if (cinematicType == CinematicHelper.CinematicType.MOVIE) {
+      cinematicConfig.set("properties.author", player.getName());
+      cinematicConfig.set("properties.frameRate", frameRate);
+      cinematicConfig.set("movie.interpolation", true);
+      cinematicConfig.set("movie.letterBoxBars", true);
+      cinematicConfig.set("movie.playMusic", true);
+      cinematicConfig.set("movie.musicToPlay", "music_disc.stal");
+    }
+    else PlayerFileHelper.updatePlayerFile(player, PlayerFileHelper.Status.RECORDING, false);
+
+    try {cinematicConfig.save(cinematicProperties);}
+    catch (IOException ignored) {}
+
+    if (!startRecording) return;
+
+    player.setGameMode(GameMode.SPECTATOR);
+    this.record(frameRate, false);
   }
 
 
-  private void record(int frameRate) {
+  public void record(int frameRate, boolean movieCinematic) {
     final int[] frame = {1};
     final int[] duration = {0};
     final int[] maxFPS = {0};
 
+    if (movieCinematic) {
+      final var cinematicFolder = PluginFileAPI.getFolder(cinematicName, CinematicHelper.cinematicsFolder);
+      final var cinematicProperties = PluginFileAPI.getFile(cinematicFolder, "properties");
+      final var cinematicConfig = PluginFileAPI.getFileConfig(cinematicProperties);
+
+      final var musicToPlay = cinematicConfig.getString("movie.musicToPlay");
+      if (musicToPlay != null) player.playSound(player.getLocation(), musicToPlay, SoundCategory.AMBIENT, 1, 1);
+    }
+
+    player.setGameMode(GameMode.SPECTATOR);
     var task = new CancellableScheduledTask() {
 
       @Override
@@ -186,16 +245,16 @@ public class CinematicManager {
         try {secondConfig.save(secondFile);}
         catch (IOException ignored) {}
 
-        if (!PlayerFileHelper.getStatusMode(player, PlayerFileHelper.Status.RECORDING) || !player.isOnline()) {
+        if (PlayerFileHelper.isStatusDeactivated(player, PlayerFileHelper.Status.RECORDING) || !player.isOnline()) {
+          if (movieCinematic) player.stopAllSounds();
+
           cinematicConfig.set("properties.framesRecorded", frame[0]);
           cinematicConfig.set("properties.totalDuration", duration[0]);
           cinematicConfig.set("properties.author", player.getName());
           cinematicConfig.set("properties.frameRate", frameRate);
 
-          try {
-            cinematicConfig.save(cinematicProperties);
-          } catch (IOException ignored) {}
-
+          try { cinematicConfig.save(cinematicProperties); }
+          catch (IOException ignored) {}
           this.cancel();
         }
       }

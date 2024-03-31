@@ -22,12 +22,14 @@ public abstract class MenuAPI implements Listener, Cloneable {
     protected final Player player;
     protected final String name;
     protected final PanelMode panelMode;
+    protected final String cinematicName;
 
-    public MenuAPI(@Nullable InventoryHolder holder, int size, String name, Player player, PanelMode panelMode) {
+    public MenuAPI(@Nullable InventoryHolder holder, int size, String name, Player player, PanelMode panelMode, @Nullable String cinematicName) {
         this.inventory = Bukkit.createInventory(holder, size, ChatUtils.format(name));
         this.name = ChatUtils.format(name);
         this.player = player;
         this.panelMode = panelMode;
+        this.cinematicName = cinematicName;
 
         Bukkit.getServer().getPluginManager().registerEvents(this, MotionCore.getInstance());
         initInventory();
