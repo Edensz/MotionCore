@@ -1,9 +1,9 @@
 package org.motion.tool;
-
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.*;
 import org.motion.MotionCore;
 import org.motion.player.PlayerFileHelper;
+import org.motion.panel.CinematicPanel;
 import org.motion.utils.ChatUtils;
 import org.motion.utils.MenuAPI;
 import org.motion.player.PlayerHandler;
@@ -13,37 +13,32 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.motion.utils.PluginFileAPI;
 
-
-@CommandAlias("cinematic")
-@CommandPermission("admin.perm")
+@CommandAlias("cinematic") @CommandPermission("admin.perm")
 public class CinematicCommand extends BaseCommand {
 
-  @Subcommand("panel")
-  @Default
+  @Subcommand("panel") @Default
   private void panel(CommandSender commandSender) {
     if (!(commandSender instanceof Player sender)) return;
     new CinematicPanel(sender, MenuAPI.PanelMode.VIEW, null).open();
   }
 
 
-  @Subcommand("help")
-  @CatchUnknown @Default
+  @Subcommand("help") @CatchUnknown @Default
   private void help(CommandSender commandSender) {
     if (!(commandSender instanceof Player sender)) return;
 
-    sender.sendMessage(ChatUtils.format("&7/#D56C6Ccinematic delete &7[#D56C6CCinematic&7]"));
-    sender.sendMessage(ChatUtils.format("&7/#D56C6Ccinematic play &7[#D56C6CCinematic&7] &7[#D56C6CPlayer&7]"));
-    sender.sendMessage(ChatUtils.format("&7/#D56C6Ccinematic stop &7[#D56C6CPlayer&7]"));
-    sender.sendMessage(ChatUtils.format("&7/#D56C6Ccinematic finish &7[#D56C6CPlayer&7]"));
-    sender.sendMessage(ChatUtils.format("&7/#D56C6Ccinematic create &7[#D56C6CName&7] &7[#D56C6CFPS&7] &7&o[#D56C6CType&7]"));
+    sender.sendMessage(ChatUtils.format("&7/#D56C6Ccinematic delete &7<#D56C6CCinematic&7>"));
+    sender.sendMessage(ChatUtils.format("&7/#D56C6Ccinematic play &7<#D56C6CCinematic&7> &7<#D56C6CPlayer&7>"));
+    sender.sendMessage(ChatUtils.format("&7/#D56C6Ccinematic stop &7<#D56C6CPlayer&7>"));
+    sender.sendMessage(ChatUtils.format("&7/#D56C6Ccinematic finish &7<#D56C6CPlayer&7>"));
+    sender.sendMessage(ChatUtils.format("&7/#D56C6Ccinematic create &7<#D56C6CName&7> &7[#D56C6CType&7] &7[#D56C6CFPS&7]"));
 
     PlayerHandler.playSound(Sound.ENTITY_PLAYER_LEVELUP, 1.55f, sender);
     PlayerHandler.playSound(Sound.BLOCK_NOTE_BLOCK_BIT, 0.95f, sender);
   }
 
 
-  @Subcommand("delete")
-  @CommandCompletion("@Cinematics")
+  @Subcommand("delete") @CommandCompletion("@Cinematics")
   private void delete(CommandSender commandSender, String name) {
     PluginFileAPI.deleteFolderInFolder("cinematics", name);
 
@@ -54,8 +49,7 @@ public class CinematicCommand extends BaseCommand {
   }
 
 
-  @Subcommand("play")
-  @CommandCompletion("@Cinematics")
+  @Subcommand("play") @CommandCompletion("@Cinematics")
   private void play(CommandSender commandSender, String name, @Optional @Flags("other") Player audience) {
     if (audience == null) {
       if (commandSender instanceof Player sender) audience = sender;
@@ -103,14 +97,16 @@ public class CinematicCommand extends BaseCommand {
       PlayerHandler.playSound(Sound.BLOCK_CHEST_CLOSE,1.25F, sender);
       PlayerHandler.playSound(Sound.ENTITY_PLAYER_LEVELUP,1.85F, sender);
       PlayerHandler.playSound(Sound.UI_BUTTON_CLICK, 1.25f, sender);
-    }, 5);
+    }, 1);
   }
 
 
   @Subcommand("create")
-  private void create(CommandSender commandSender, String cinematicName, int frameRate, @Optional CinematicHelper.CinematicType cinematicType) {
-    if (!(commandSender instanceof Player sender)) return;
-
+  private void create(CommandSender commandSender, String cinematicName, @Optional int frameRate, @Optional CinematicHelper.CinematicType cinematicType) {
+    if (!(commandSender instanceof Player sender)) {
+      MotionCore.logConsoleMessage("Este comando solo puede ser ejecutado dentro del juego.");
+      return;
+    }
     if (CinematicHelper.doesCinematicExist(cinematicName)) {
       PlayerHandler.errorMessage("El nombre insertado ya está siendo usado por otra cinemática.", sender);
       return;
@@ -119,7 +115,10 @@ public class CinematicCommand extends BaseCommand {
       PlayerHandler.errorMessage("¡No puedes grabar dos cinemáticas al mismo tiempo!", sender);
       return;
     }
+
     if (cinematicType == null) cinematicType = CinematicHelper.CinematicType.BASIC;
+    if (frameRate == 0) frameRate = 60;
+
     if (cinematicType != CinematicHelper.CinematicType.BASIC) {
       switch (cinematicType) {
         case MOVIE -> {
@@ -144,8 +143,9 @@ public class CinematicCommand extends BaseCommand {
     }
 
     final var finalCinematicType = cinematicType;
+    final var finalFrameRate = frameRate;
     Bukkit.getScheduler().runTaskLater(MotionCore.getInstance(), () -> {
-      new CinematicManager(sender, cinematicName).create(frameRate, finalCinematicType, true);
+      new CinematicManager(sender, cinematicName).create(finalFrameRate, finalCinematicType, true);
       PlayerHandler.playSound(Sound.BLOCK_CHEST_OPEN,1.25F, sender);
       PlayerHandler.playSound(Sound.ENTITY_PLAYER_LEVELUP, 1.25f, sender);
       PlayerHandler.playSound(Sound.UI_BUTTON_CLICK, 1.25f, sender);

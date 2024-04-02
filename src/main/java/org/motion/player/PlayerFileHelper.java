@@ -11,7 +11,7 @@ public class PlayerFileHelper {
   public enum Status {WATCHING,RECORDING,CHILLING}
 
 
-  public static void setCreatingMode(Player player, boolean creatingMode, String cinematicName) {
+  public static void setCreatingMode(@NotNull Player player, boolean creatingMode, String cinematicName) {
     final var playerFile = PluginFileAPI.getFile(PlayerFileManager.playerFolder, player.getName());
     final var playerConfig = PluginFileAPI.getFileConfig(playerFile);
 
@@ -29,8 +29,14 @@ public class PlayerFileHelper {
     return !PluginFileAPI.getFileConfig(file).getBoolean(key);
   }
 
+  public static boolean isStatusActivated(@NotNull Player player, @NotNull Status status) {
+    var key = status.name().toLowerCase();
+    var file = PluginFileAPI.getFile(PlayerFileManager.playerFolder, player.getName());
+    return PluginFileAPI.getFileConfig(file).getBoolean(key);
+  }
 
-  public static void updatePlayerFile(Player player, @NotNull Status status, boolean onlyStatus) {
+
+  public static void updatePlayerFile(@NotNull Player player, @NotNull Status status, boolean onlyStatus) {
     final var key = status.name().toLowerCase();
 
     final var file = PluginFileAPI.getFile(PlayerFileManager.playerFolder, player.getName());

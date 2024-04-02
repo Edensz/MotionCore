@@ -1,2 +1,20 @@
-global:
-  recording: false
+cinematicPanel:
+  onlyOperators: true
+  showMovies: true
+  showChains: true
+  showBasics: true
+
+cinematicCreation:
+  overwrite: false
+  onlyOperators: true
+  defaultType: BASIC
+  defaultFrameRate: 60
+
+cinematicDisplay:
+  hideSpectators: true
+  transitionScreen:
+    character: ㊭
+    fadeIn: 35
+    fadeOut: 35
+    stay: 20
+  displayLetterboxAs: PUMPKIN
