@@ -1,10 +1,8 @@
 package org.motion.player;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.motion.MotionCore;
@@ -15,7 +13,6 @@ import org.motion.utils.MenuAPI;
 import org.motion.utils.PluginFileAPI;
 
 import java.io.IOException;
-
 
 public class PlayerListener implements Listener {
 

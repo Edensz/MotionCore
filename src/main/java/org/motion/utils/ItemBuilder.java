@@ -147,17 +147,17 @@ public class ItemBuilder {
         return this;
     }
 
-    public ItemBuilder addLore(String value) {
+    public void addLore(String value) {
         List<String> lore = new ArrayList<>();
         this.im = this.is.getItemMeta();
 
-        lore.add(ChatUtils.format(value));
-        if (this.im.hasLore()) lore.addAll(this.im.getLore());
+        if (this.im.getLore() != null) {
+            lore.addAll(this.im.getLore());
+            lore.add(ChatUtils.format(value));
+        }
 
         this.im.setLore(lore);
         this.is.setItemMeta(this.im);
-
-        return this;
     }
 
 

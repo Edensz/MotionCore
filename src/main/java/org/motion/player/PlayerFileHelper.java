@@ -29,12 +29,6 @@ public class PlayerFileHelper {
     return !PluginFileAPI.getFileConfig(file).getBoolean(key);
   }
 
-  public static boolean isStatusActivated(@NotNull Player player, @NotNull Status status) {
-    var key = status.name().toLowerCase();
-    var file = PluginFileAPI.getFile(PlayerFileManager.playerFolder, player.getName());
-    return PluginFileAPI.getFileConfig(file).getBoolean(key);
-  }
-
 
   public static void updatePlayerFile(@NotNull Player player, @NotNull Status status, boolean onlyStatus) {
     final var key = status.name().toLowerCase();

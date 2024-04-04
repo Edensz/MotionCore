@@ -183,7 +183,6 @@ public class CinematicManager {
     final var cinematic = PluginFileAPI.getFolder(cinematicName, CinematicHelper.cinematicsFolder);
     PluginFileAPI.createYAMLFile(cinematic, "properties");
 
-    cinematicConfig.set("properties.framesRecorded", 0);
     cinematicConfig.set("properties.totalDuration", 0);
     cinematicConfig.set("properties.author", 0);
     cinematicConfig.set("properties.frameRate", 0);
@@ -191,21 +190,34 @@ public class CinematicManager {
     cinematicConfig.set("properties.timesPlayed", 0);
     cinematicConfig.set("properties.type", cinematicType.name().toLowerCase());
 
-    if (cinematicType == CinematicHelper.CinematicType.MOVIE) {
+    if (cinematicType != CinematicHelper.CinematicType.BASIC) {
       cinematicConfig.set("properties.author", player.getName());
       cinematicConfig.set("properties.frameRate", frameRate);
-      cinematicConfig.set("movie.interpolation", true);
-      cinematicConfig.set("movie.letterBoxBars", true);
-      cinematicConfig.set("movie.playMusic", true);
-      cinematicConfig.set("movie.musicToPlay", "music_disc.stal");
     }
-    else PlayerFileHelper.updatePlayerFile(player, PlayerFileHelper.Status.RECORDING, false);
+    if (cinematicType != CinematicHelper.CinematicType.CHAIN) {
+      cinematicConfig.set("properties.chainUsages", 0);
+      cinematicConfig.set("properties.framesRecorded", 0);
+    }
+
+    switch (cinematicType) {
+      case MOVIE -> {
+        cinematicConfig.set("movie.interpolation", true);
+        cinematicConfig.set("movie.letterBoxBars", true);
+        cinematicConfig.set("movie.playMusic", true);
+        cinematicConfig.set("movie.musicToPlay", "music_disc.stal");
+      }
+      case CHAIN -> {
+        cinematicConfig.set("chain.cinematics", 0);
+        cinematicConfig.set("chain.stopAudioOnInterval", true);
+        cinematicConfig.set("chain.playOnlyFirstMusic", true);
+      }
+    }
 
     try {cinematicConfig.save(cinematicProperties);}
     catch (IOException ignored) {}
 
     if (!startRecording) return;
-
+    PlayerFileHelper.updatePlayerFile(player, PlayerFileHelper.Status.RECORDING, false);
     player.setGameMode(GameMode.SPECTATOR);
     this.record(frameRate, false);
   }
@@ -266,7 +278,6 @@ public class CinematicManager {
           this.cancel();
         }
       }
-
     };
 
     task.setScheduledFuture(MotionCore.getExecutorService().scheduleWithFixedDelay(task, 0, (1000/frameRate) * 1000L, TimeUnit.MICROSECONDS));

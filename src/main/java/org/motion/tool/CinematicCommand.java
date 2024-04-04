@@ -102,13 +102,9 @@ public class CinematicCommand extends BaseCommand {
 
 
   @Subcommand("create")
-  private void create(CommandSender commandSender, String cinematicName, @Optional int frameRate, @Optional CinematicHelper.CinematicType cinematicType) {
+  private void create(CommandSender commandSender, String cinematicName, int frameRate, @Optional CinematicHelper.CinematicType cinematicType) {
     if (!(commandSender instanceof Player sender)) {
       MotionCore.logConsoleMessage("Este comando solo puede ser ejecutado dentro del juego.");
-      return;
-    }
-    if (CinematicHelper.doesCinematicExist(cinematicName)) {
-      PlayerHandler.errorMessage("El nombre insertado ya está siendo usado por otra cinemática.", sender);
       return;
     }
     if (PlayerFileHelper.isStatusDeactivated(sender, PlayerFileHelper.Status.CHILLING)) {
@@ -117,22 +113,14 @@ public class CinematicCommand extends BaseCommand {
     }
 
     if (cinematicType == null) cinematicType = CinematicHelper.CinematicType.BASIC;
-    if (frameRate == 0) frameRate = 60;
-
     if (cinematicType != CinematicHelper.CinematicType.BASIC) {
-      switch (cinematicType) {
-        case MOVIE -> {
-          new CinematicManager(sender, cinematicName).create(frameRate, CinematicHelper.CinematicType.MOVIE, false);
-          new CinematicPanel(sender, CinematicPanel.PanelMode.MOVIE, cinematicName).open();
-        }
-        case CHAIN -> new CinematicPanel(sender, CinematicPanel.PanelMode.CHAIN, null).open();
-      }
+      new CinematicManager(sender, cinematicName).create(frameRate, cinematicType, false);
+      new CinematicPanel(sender, MenuAPI.PanelMode.valueOf(cinematicType.name()), cinematicName).open();
       return;
     }
 
     PlayerHandler.sendMessage("#C4857FSe grabará cada movimiento que hagas una vez que el contador termine.", sender);
     PlayerHandler.playSound(Sound.BLOCK_BELL_USE, 1.1f, sender);
-
     for (int countdown = 0; countdown < 5; countdown++) {
       var pitch = (float) (1 - (0.05 * countdown));
       var delay = countdown * 20;

@@ -1,4 +1,5 @@
 package org.motion.tool;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,13 @@ public class CinematicHelper {
     if (cinematicList == null) return false;
     for (String cinematic : cinematicList) if (cinematicName.equals(cinematic)) return true;
     return false;
+  }
+
+  @NotNull
+  public static YamlConfiguration getCinematicProperties(String cinematicName) {
+    final var cinematicFolder = PluginFileAPI.getFolder(cinematicName, CinematicHelper.cinematicsFolder);
+    final var cinematicProperties = PluginFileAPI.getFile(cinematicFolder, "properties");
+    return PluginFileAPI.getFileConfig(cinematicProperties);
   }
 
   @Nullable
